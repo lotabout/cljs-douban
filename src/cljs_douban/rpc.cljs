@@ -26,3 +26,18 @@
           :handler (fn [response]
                      (go (>! ch response)))})
     ch))
+
+(defn song-op [type & {:keys [user_id expire token sid h channel]
+                       :as params
+                       :or {user_id nil, expire nil, token, nil, sid nil, h nil, channel nil}}]
+  "do operation on songs"
+  (let [ch (chan)
+        params (reduce conj
+                       {"app_name" "radio_desktop_win", "version" 100, "type" type}
+                       (map (fn [[k v]] [(name k) v]) (filter #(-> % val) params)))]
+    (GET "http://www.douban.com/j/app/radio/people"
+         {:response-format :json
+          :params params
+          :handler (fn [response]
+                     (go (>! ch response)))})
+    ch))

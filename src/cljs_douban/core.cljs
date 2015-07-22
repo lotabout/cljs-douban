@@ -3,7 +3,8 @@
             [ajax.core :refer [GET POST]]
             [cljs.core.async :refer [<! chan >!]]
             [cljs-douban.rpc :as rpc]
-            [cljs-douban.view :as view])
+            [cljs-douban.view :as view]
+            [cljs-douban.model :as model])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (enable-console-print!)
@@ -16,18 +17,6 @@
 
 (defn hello-world []
   [:h1 (:text @app-state)])
-
-(def channels (atom nil))
-(def selected-channel (atom nil))
-
-#_(reagent/render-component [view/channel-list channels selected-channel]
-                          (. js/document (getElementById "app")))
-
-(go (let [channel-list (<! (rpc/get-channel-list))]
-      (reset! channels (channel-list "channels"))
-      (reagent/render-component [view/channel-list channels selected-channel]
-                                (. js/document (getElementById "app")))))
-
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on
   ;; your application
@@ -37,7 +26,7 @@
 (def username "test")
 (def password "test")
 
-(let [ch (rpc/login username password)]
+#_(let [ch (rpc/login username password)]
   (go (let [response-map (<! ch)]
         (.log js/console (response-map "user_id"))
         (.log js/console (response-map "err"))
@@ -46,3 +35,23 @@
         (.log js/console (response-map "r"))
         (.log js/console (response-map "user_name"))
         (.log js/console (response-map "email")))))
+
+(def channels (atom nil))
+(def selected-channel (atom nil))
+
+#_(reagent/render-component [view/channel-list channels selected-channel]
+                          (. js/document (getElementById "app")))
+
+#_(go (let [channel-list (<! (rpc/get-channel-list))]
+      (reset! channels (channel-list "channels"))
+      (reagent/render-component [view/channel-list channels selected-channel]
+                                (. js/document (getElementById "app")))))
+
+(defn next-song []
+  (let [next-song (model/next-song)]
+    (.log js/console next-song)
+    (reagent/render-component [:div (str next-song)]
+                              (. js/document (getElementById "app")))))
+(next-song)
+
+
