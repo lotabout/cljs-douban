@@ -2,7 +2,8 @@
   (:require [reagent.core :as reagent :refer [atom]]
             [ajax.core :refer [GET POST]]
             [cljs.core.async :refer [<! chan >!]]
-            [cljs-douban.rpc :as rpc])
+            [cljs-douban.rpc :as rpc]
+            [cljs-douban.view :as view])
   (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (enable-console-print!)
@@ -16,9 +17,16 @@
 (defn hello-world []
   [:h1 (:text @app-state)])
 
-(reagent/render-component [hello-world]
+(def channels (atom nil))
+(def selected-channel (atom nil))
+
+#_(reagent/render-component [view/channel-list channels selected-channel]
                           (. js/document (getElementById "app")))
 
+(go (let [channel-list (<! (rpc/get-channel-list))]
+      (reset! channels (channel-list "channels"))
+      (reagent/render-component [view/channel-list channels selected-channel]
+                                (. js/document (getElementById "app")))))
 
 (defn on-js-reload []
   ;; optionally touch your app-state to force rerendering depending on

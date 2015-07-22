@@ -17,3 +17,12 @@
            :handler (fn [response]
                       (go (>! ch response)))})
     ch))
+
+(defn get-channel-list []
+  "return a core.async channel containing the channel list"
+  (let [ch (chan)]
+    (GET "http://www.douban.com/j/app/radio/channels"
+         {:response-format :json
+          :handler (fn [response]
+                     (go (>! ch response)))})
+    ch))
