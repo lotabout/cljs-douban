@@ -39,19 +39,14 @@
 (def channels (atom nil))
 (def selected-channel (atom nil))
 
-#_(reagent/render-component [view/channel-list channels selected-channel]
-                          (. js/document (getElementById "app")))
+;;; get channel list
+(go (let [channel-list (<! (rpc/get-channel-list))]
+      (reset! channels (channel-list "channels"))))
 
-#_(go (let [channel-list (<! (rpc/get-channel-list))]
-      (reset! channels (channel-list "channels"))
-      (reagent/render-component [view/channel-list channels selected-channel]
-                                (. js/document (getElementById "app")))))
+(defn main-app []
+  (fn []
+    [:div#main
+     [view/channel-list channels selected-channel]
+     [view/song-player]]))
 
-(defn next-song []
-  (let [next-song (model/next-song)]
-    (.log js/console next-song)
-    (reagent/render-component [:div (str next-song)]
-                              (. js/document (getElementById "app")))))
-(next-song)
-
-
+(reagent/render-component [main-app] (. js/document (getElementById "app")))
