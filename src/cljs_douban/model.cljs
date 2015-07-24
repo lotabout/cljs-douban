@@ -9,17 +9,17 @@
 
 (defn next-song []
   "get the next song information"
+  (when @song-list
+    (swap! song-list pop))
   (go (let [left (count @song-list)]
         (cond
           ;; fetch new playlist
           (<= left 1) (reset! song-list
-                              ((<! (rpc/song-op "n" :channel @current-channel-id))
-                               "song"))
+                              ((<! (rpc/song-op "n" :channel @current-channel-id)) "song"))
           ;; fetch new playlist while playing
-          (<= left 2) (swap! song-list
-                             #(into % ((<! (rpc/song-op "p" :channel @current-channel-id))
-                                       "song")))
-          
+          (<= left 2) (reset! song-list
+                              (into @song-list
+                                    ((<! (rpc/song-op "p" :channel @current-channel-id)) "song")))
           :else (swap! song-list pop)))
       (peek @song-list)))
 
