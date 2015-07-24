@@ -1,7 +1,8 @@
 (ns ^:figwheel-always cljs-douban.view
-    (:require [reagent.core :as reagent :refer [atom]]
+    (:require [reagent.core :as reagent :refer [atom dom-node]]
               [cljs-douban.model :as model]
-              [cljs.core.async :refer [<! chan >!]])
+              [cljs.core.async :refer [<! chan >!]]
+              [dommy.core :as dom :refer-macros [sel1 sel]])
     (:require-macros [cljs.core.async.macros :refer [go]]))
 
 (defn channel-list [channels selected-channel]
@@ -18,17 +19,17 @@
     (fn []
       [:div#player
        [:p "title: " (@current-song "title")]
-       [:audio#player-audio {:autoplay "true"
-                             :controls "true"
-                             :src (str (@current-song "url"))}]
+       [:audio#player-audio
+        {:autoPlay "true"
+         :controls "true"
+         :src (str (@current-song "url"))
+         :on-ended #(go (reset! current-song (<! (model/end-song))))}]
        [:input {:type "button"
                 :value "Next Song"
-                :on-click #(go (reset! current-song (<! (model/next-song)))
-                               (let [player (. js/document (getElementById "player-audio"))]
-                                 (set! (.-autoplay player) true)))}]
+                :on-click #(go (reset! current-song (<! (model/skip-song))))}]
        [:input {:type "button"
                 :value "Play/Stop"
-                :on-click #(let [player (. js/document (getElementById "player-audio"))]
+                :on-click #(let [player (sel1 :#player-audio)]
                              (if (.-paused player)
                                (.play player)
                                (.pause player)))}]])))
