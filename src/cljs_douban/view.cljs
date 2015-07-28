@@ -13,23 +13,33 @@
        ^{:key (channel "channel_id")}
        [:li (channel "name")])]))
 
-(defn song-player []
+
+(def current-song (atom {}))
+
+(defn song-player-plain []
   "display songs and controls"
-  (let [current-song (atom {})]
-    (fn []
-      [:div#player
-       [:p "title: " (@current-song "title")]
-       [:audio#player-audio
-        {:autoPlay "true"
-         :controls "true"
-         :src (str (@current-song "url"))
-         :on-ended #(go (reset! current-song (<! (model/end-song))))}]
-       [:input {:type "button"
-                :value "Next Song"
-                :on-click #(go (reset! current-song (<! (model/skip-song))))}]
-       [:input {:type "button"
-                :value "Play/Stop"
-                :on-click #(let [player (sel1 :#player-audio)]
-                             (if (.-paused player)
-                               (.play player)
-                               (.pause player)))}]])))
+  (fn []
+    [:div#player
+     [:p "title: " (@current-song "title")]
+     [:audio#player-audio
+      {:autoPlay "true"
+       :controls "true"
+       :src (str (@current-song "url"))}]
+     [:input {:type "button"
+              :value "Next Song"
+              :on-click #(go (reset! current-song (<! (model/skip-song))))}]
+     [:input {:type "button"
+              :value "Play/Stop"
+              :on-click #(let [player (sel1 :#player-audio)]
+                           (if (.-paused player)
+                             (.play player)
+                             (.pause player)))}]]))
+
+;;; react do not support 'onended' event and thus should manually bind it.
+;;; and this is not very 'reagent'-ish
+;;; Also I had to put 'current-song' into global in order to refer to it.
+(def song-player
+  (with-meta song-player-plain
+    {:component-did-mount
+     (fn [this]
+       (dom/listen! (sel1 :#player-audio) :ended #(go (reset! current-song (<! (model/end-song))))))}))
